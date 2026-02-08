@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP4 Major Brands 读取器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin: 0 0 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            background: #fafafa;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        input[type="file"]:hover {
+            border-color: #4CAF50;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover:not(:disabled) {
+            background: #45a049;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+            border-radius: 4px;
+            display: none;
+        }
+
+        #result.show {
+            display: block;
+        }
+
+        #result.error {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .value {
+            color: #666;
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        .error .label {
+            color: #d32f2f;
+        }
+
+        .error .value {
+            color: #c62828;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>MP4 Major Brands 读取器</h1>
+        <label for="videoFile">选择视频文件：</label>
+        <input type="file" id="videoFile" accept="video/*,.mp4">
+        <button id="processBtn" disabled>读取 Major Brands</button>
+        <div id="result"></div>
+    </div>
+
+    <script type="module">
+        const $ = id => document.getElementById(id);
+        const fileInput = $('videoFile');
+        const processBtn = $('processBtn');
+        const resultDiv = $('result');
+
+        let readMajorBrands;
+
+        // 初始化 WASM 模块
+        (async () => {
+            try {
+                const { default: init, read_major_brands } = await import('./dist-web/mp4_mask.js');
+                await init('./dist-web/mp4_mask_bg.wasm');
+                readMajorBrands = read_major_brands;
+                console.log('WASM 初始化成功');
+            } catch (error) {
+                showResult('错误', `初始化失败: ${error.message}`, true);
+            }
+        })();
+
+        // 文件选择事件处理
+        fileInput.addEventListener('change', e => {
+            processBtn.disabled = !e.target.files[0];
+            resultDiv.classList.remove('show');
+        });
+
+        // 处理按钮点击事件
+        processBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file || !readMajorBrands) return;
+
+            processBtn.disabled = true;
+            showResult('处理中', '正在读取文件...', false);
+
+            try {
+                const buffer = await file.arrayBuffer();
+
+                // 计算 read_major_brands 的耗时
+                const startTime = performance.now();
+                const result = readMajorBrands(new Uint8Array(buffer));
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(3);
+
+                showResult('Major Brands', `${result}<br><small style="color: #999;">耗时: ${duration} ms</small>`, false);
+                console.log('结果:', result, '| 耗时:', duration, 'ms');
+            } catch (error) {
+                showResult('错误', error.message, true);
+            } finally {
+                processBtn.disabled = false;
+            }
+        });
+
+        // 显示结果
+        function showResult(label, value, isError) {
+            resultDiv.className = 'show' + (isError ? ' error' : '');
+            resultDiv.innerHTML = `<div class="label">${label}:</div><div class="value">${value}</div>`;
+        }
+    </script>
+</body>
+
+</html>

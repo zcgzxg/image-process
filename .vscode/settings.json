@@ -1,0 +1,20 @@
+{
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "rust-analyzer.cargo.target": "wasm32-unknown-unknown",
+  "rust-analyzer.cargo.features": "all",
+  "rust-analyzer.cargo.buildScripts": "auto",
+  "rust-analyzer.cargo.runArguments": [
+    "--target",
+    "wasm32-unknown-unknown",
+    "--release"
+  ],
+  "editor.formatOnSave": true,
+  "cSpell.words": [
+    "bindgen",
+    "cdylib",
+    "codegen",
+    "rlib",
+    "rustc"
+  ]
+}
