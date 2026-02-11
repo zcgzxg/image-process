@@ -2,181 +2,182 @@
 <html lang="zh-CN">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MP4 Major Brands 读取器</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>图片缩略图生成器</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #f0f2f5;
+      color: #333;
+    }
 
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
+    .container {
+      background: #fff;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
 
-        h1 {
-            color: #333;
-            margin: 0 0 20px;
-        }
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 24px;
+      color: #1a1a1a;
+    }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
-        }
+    .upload-area {
+      border: 2px dashed #d0d5dd;
+      border-radius: 8px;
+      padding: 24px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 24px;
+    }
 
-        input[type="file"] {
-            width: 100%;
-            padding: 10px;
-            border: 2px dashed #ddd;
-            border-radius: 4px;
-            background: #fafafa;
-            cursor: pointer;
-            margin-bottom: 15px;
-        }
+    .upload-area:hover {
+      border-color: #4f8ff7;
+      background: #f7faff;
+    }
 
-        input[type="file"]:hover {
-            border-color: #4CAF50;
-        }
+    .upload-area p {
+      color: #667085;
+      font-size: 0.95rem;
+    }
 
-        button {
-            background: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
+    #file-input {
+      display: none;
+    }
 
-        button:hover:not(:disabled) {
-            background: #45a049;
-        }
+    .result {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
 
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
+    .result.visible {
+      display: flex;
+    }
 
-        #result {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f9f9f9;
-            border-left: 4px solid #4CAF50;
-            border-radius: 4px;
-            display: none;
-        }
+    .result p {
+      font-size: 0.85rem;
+      color: #667085;
+    }
 
-        #result.show {
-            display: block;
-        }
+    #thumbnail {
+      border-radius: 6px;
+      border: 1px solid #e4e7ec;
+      background: #fafafa;
+    }
 
-        #result.error {
-            background: #ffebee;
-            border-left-color: #f44336;
-        }
+    .error {
+      color: #d92d20;
+      font-size: 0.85rem;
+      margin-top: 12px;
+      display: none;
+    }
 
-        .label {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .value {
-            color: #666;
-            font-family: monospace;
-            word-break: break-all;
-        }
-
-        .error .label {
-            color: #d32f2f;
-        }
-
-        .error .value {
-            color: #c62828;
-        }
-    </style>
+    .error.visible {
+      display: block;
+    }
+  </style>
 </head>
 
 <body>
-    <div class="container">
-        <h1>MP4 Major Brands 读取器</h1>
-        <label for="videoFile">选择视频文件：</label>
-        <input type="file" id="videoFile" accept="video/*,.mp4">
-        <button id="processBtn" disabled>读取 Major Brands</button>
-        <div id="result"></div>
+  <div class="container">
+    <h1>图片缩略图生成器</h1>
+
+    <div class="upload-area" id="upload-area">
+      <p>点击此处选择图片文件</p>
+      <input type="file" id="file-input" accept="image/*" />
     </div>
 
-    <script type="module">
-        const $ = id => document.getElementById(id);
-        const fileInput = $('videoFile');
-        const processBtn = $('processBtn');
-        const resultDiv = $('result');
+    <div class="result" id="result">
+      <p>缩略图 (100 x 100)</p>
+      <img id="thumbnail" width="100" height="100" alt="缩略图" />
+    </div>
 
-        let readMajorBrands;
+    <p class="error" id="error"></p>
+  </div>
 
-        // 初始化 WASM 模块
-        (async () => {
-            try {
-                const { default: init, read_major_brands } = await import('./dist-web/mp4_mask.js');
-                await init('./dist-web/mp4_mask_bg.wasm');
-                readMajorBrands = read_major_brands;
-                console.log('WASM 初始化成功');
-            } catch (error) {
-                showResult('错误', `初始化失败: ${error.message}`, true);
-            }
-        })();
+  <script type="module">
+    import init, { Image } from "./dist-web/image_process.js";
 
-        // 文件选择事件处理
-        fileInput.addEventListener('change', e => {
-            processBtn.disabled = !e.target.files[0];
-            resultDiv.classList.remove('show');
-        });
+    const now = Date.now();
+    // 初始化 WASM 模块
+    await init();
+    console.log(`初始化 WASM 模块时间: ${Date.now() - now}ms`);
 
-        // 处理按钮点击事件
-        processBtn.addEventListener('click', async () => {
-            const file = fileInput.files[0];
-            if (!file || !readMajorBrands) return;
+    const uploadArea = document.getElementById("upload-area");
+    const fileInput = document.getElementById("file-input");
+    const resultDiv = document.getElementById("result");
+    const thumbnailImg = document.getElementById("thumbnail");
+    const errorEl = document.getElementById("error");
 
-            processBtn.disabled = true;
-            showResult('处理中', '正在读取文件...', false);
+    // 上一次生成的 Object URL，用于释放内存
+    let prevObjectUrl = null;
 
-            try {
-                const buffer = await file.arrayBuffer();
+    uploadArea.addEventListener("click", () => {
+      fileInput.click();
+    });
 
-                // 计算 read_major_brands 的耗时
-                const startTime = performance.now();
-                const result = readMajorBrands(new Uint8Array(buffer));
-                const endTime = performance.now();
-                const duration = (endTime - startTime).toFixed(3);
+    fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
 
-                showResult('Major Brands', `${result}<br><small style="color: #999;">耗时: ${duration} ms</small>`, false);
-                console.log('结果:', result, '| 耗时:', duration, 'ms');
-            } catch (error) {
-                showResult('错误', error.message, true);
-            } finally {
-                processBtn.disabled = false;
-            }
-        });
+      // 隐藏之前的错误信息
+      errorEl.classList.remove("visible");
+      resultDiv.classList.remove("visible");
 
-        // 显示结果
-        function showResult(label, value, isError) {
-            resultDiv.className = 'show' + (isError ? ' error' : '');
-            resultDiv.innerHTML = `<div class="label">${label}:</div><div class="value">${value}</div>`;
+      try {
+        let now = Date.now();
+        // 读取文件为 Uint8Array
+        const arrayBuffer = await file.arrayBuffer();
+        console.log(`读取文件时间: ${Date.now() - now}ms`);
+        now = Date.now();
+        const imageData = new Uint8Array(arrayBuffer);
+
+        // 调用 WASM 生成缩略图
+        const img = new Image(imageData);
+        console.log(`创建 Image 对象时间: ${Date.now() - now}ms`);
+        now = Date.now();
+        const thumbnailData = img.thumbnail(100, 100);
+        console.log(`生成缩略图时间: ${Date.now() - now}ms`);
+        now = Date.now();
+        img.free();
+        console.log(`释放 Image 对象时间: ${Date.now() - now}ms`);
+
+        // 将缩略图数据转换为 Blob 并创建 Object URL
+        const blob = new Blob([thumbnailData], { type: "image/jpeg" });
+
+        // 释放上一次的 Object URL
+        if (prevObjectUrl) {
+          URL.revokeObjectURL(prevObjectUrl);
         }
-    </script>
+
+        prevObjectUrl = URL.createObjectURL(blob);
+        thumbnailImg.src = prevObjectUrl;
+        resultDiv.classList.add("visible");
+      } catch (err) {
+        errorEl.textContent = "生成缩略图失败: " + err;
+        errorEl.classList.add("visible");
+      }
+    });
+  </script>
 </body>
 
 </html>
