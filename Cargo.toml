@@ -22,7 +22,3 @@ lto = true
 strip = true
 codegen-units = 1
 panic = "abort"
-
-[package.metadata.wasm-pack.profile.release]
-# 显式添加 --enable-bulk-memory 参数
-wasm-opt = ["-O3", "--enable-bulk-memory", "--enable-reference-types"]
