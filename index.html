@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>图片缩略图生成器</title>
+  <title>图片处理工具</title>
   <style>
     * {
       margin: 0;
@@ -17,24 +17,34 @@
         sans-serif;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       min-height: 100vh;
       background: #f0f2f5;
       color: #333;
+      padding: 40px 16px;
     }
 
-    .container {
+    .page {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .card {
       background: #fff;
       border-radius: 12px;
       padding: 32px;
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
       text-align: center;
-      max-width: 400px;
+      max-width: 420px;
       width: 100%;
     }
 
-    h1 {
-      font-size: 1.4rem;
+    .card h1 {
+      font-size: 1.3rem;
       margin-bottom: 24px;
       color: #1a1a1a;
     }
@@ -42,10 +52,10 @@
     .upload-area {
       border: 2px dashed #d0d5dd;
       border-radius: 8px;
-      padding: 24px;
+      padding: 20px;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     }
 
     .upload-area:hover {
@@ -58,19 +68,20 @@
       font-size: 0.95rem;
     }
 
-    #file-input {
-      display: none;
+    .upload-area .file-name {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: #4f8ff7;
+      font-weight: 500;
+      word-break: break-all;
     }
 
     .result {
-      display: none;
+      display: flex;
       flex-direction: column;
       align-items: center;
       gap: 12px;
-    }
-
-    .result.visible {
-      display: flex;
+      margin-top: 16px;
     }
 
     .result p {
@@ -78,105 +89,269 @@
       color: #667085;
     }
 
-    #thumbnail {
+    .result img {
       border-radius: 6px;
       border: 1px solid #e4e7ec;
       background: #fafafa;
+      max-width: 100%;
+      height: auto;
     }
 
     .error {
       color: #d92d20;
       font-size: 0.85rem;
       margin-top: 12px;
-      display: none;
     }
 
-    .error.visible {
-      display: block;
+    .label {
+      font-size: 0.85rem;
+      color: #344054;
+      margin-bottom: 6px;
+      font-weight: 500;
+      text-align: left;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1>图片缩略图生成器</h1>
+  <!-- ==================== 组件模板 ==================== -->
 
-    <div class="upload-area" id="upload-area">
-      <p>点击此处选择图片文件</p>
-      <input type="file" id="file-input" accept="image/*" />
+  <template id="thumbnail-card">
+    <div class="card">
+      <h1>缩略图生成</h1>
+
+      <div class="upload-area" @click="onClickPick">
+        <p>点击此处选择图片文件</p>
+        <div v-if="fileName" class="file-name">{{ fileName }}</div>
+        <input ref="inputRef" type="file" accept="image/*" hidden @change="onFileChange" />
+      </div>
+
+      <div v-if="resultUrl" class="result">
+        <p>缩略图 (100 × 100)</p>
+        <img :src="resultUrl" width="100" height="100" alt="缩略图" />
+      </div>
+
+      <p v-if="error" class="error">{{ error }}</p>
     </div>
+  </template>
 
-    <div class="result" id="result">
-      <p>缩略图 (100 x 100)</p>
-      <img id="thumbnail" width="100" height="100" alt="缩略图" />
+  <template id="overlay-card">
+    <div class="card">
+      <h1>图片合并 (Overlay)</h1>
+
+      <p class="label">底图（背景图片）</p>
+      <div class="upload-area" @click="onBaseClickPick">
+        <p>点击选择底图</p>
+        <div v-if="baseFileName" class="file-name">{{ baseFileName }}</div>
+        <input ref="baseInputRef" type="file" accept="image/*" hidden @change="onBaseChange" />
+      </div>
+
+      <p class="label">水印图（叠加到右下角）</p>
+      <div class="upload-area" @click="onTopClickPick">
+        <p>点击选择水印图</p>
+        <div v-if="topFileName" class="file-name">{{ topFileName }}</div>
+        <input ref="topInputRef" type="file" accept="image/*" hidden @change="onTopChange" />
+      </div>
+
+      <div v-if="resultUrl" class="result">
+        <p>合并结果</p>
+        <img :src="resultUrl" alt="合并结果" />
+      </div>
+
+      <p v-if="error" class="error">{{ error }}</p>
     </div>
+  </template>
 
-    <p class="error" id="error"></p>
+  <!-- ==================== 应用挂载点 ==================== -->
+
+  <div id="app">
+    <div class="page">
+      <thumbnail-card></thumbnail-card>
+      <overlay-card></overlay-card>
+    </div>
   </div>
 
+  <!-- ==================== 脚本 ==================== -->
+
   <script type="module">
-    import init, { Image } from "./dist-web/image_process.js";
+    import {
+      createApp,
+      ref,
+      shallowRef,
+      defineComponent,
+      onUnmounted,
+    } from "https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js";
+    import wasmInit, { Image } from "./dist-web/image_process.js";
 
-    const now = Date.now();
-    // 初始化 WASM 模块
-    await init();
-    console.log(`初始化 WASM 模块时间: ${Date.now() - now}ms`);
+    const t0 = Date.now();
+    await wasmInit();
+    console.log(`初始化 WASM 模块时间: ${Date.now() - t0}ms`);
 
-    const uploadArea = document.getElementById("upload-area");
-    const fileInput = document.getElementById("file-input");
-    const resultDiv = document.getElementById("result");
-    const thumbnailImg = document.getElementById("thumbnail");
-    const errorEl = document.getElementById("error");
+    // ==================== 共享 Composables ====================
 
-    // 上一次生成的 Object URL，用于释放内存
-    let prevObjectUrl = null;
+    /**
+     * 管理 Object URL 的创建与释放
+     * - 传入图片字节数据和 MIME 类型，创建 Blob 和 Object URL
+     * - 组件卸载时自动释放
+     */
+    function useObjectUrl() {
+      const url = ref(null);
 
-    uploadArea.addEventListener("click", () => {
-      fileInput.click();
-    });
+      function updateFromData(data, mime) {
+        if (url.value) {
+          URL.revokeObjectURL(url.value);
+        }
+        const blob = new Blob([data], { type: mime });
+        url.value = URL.createObjectURL(blob);
+      }
 
-    fileInput.addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+      onUnmounted(() => {
+        if (url.value) URL.revokeObjectURL(url.value);
+      });
 
-      // 隐藏之前的错误信息
-      errorEl.classList.remove("visible");
-      resultDiv.classList.remove("visible");
+      return { url, updateFromData };
+    }
 
-      try {
-        let now = Date.now();
-        // 读取文件为 Uint8Array
-        const arrayBuffer = await file.arrayBuffer();
-        console.log(`读取文件时间: ${Date.now() - now}ms`);
-        now = Date.now();
-        const imageData = new Uint8Array(arrayBuffer);
+    /**
+     * 文件选择器逻辑
+     * - 提供模板 ref、文件名、文件数据
+     * - fileData 使用 shallowRef，避免对大块 Uint8Array 进行不必要的深度响应式追踪
+     */
+    function useFilePicker() {
+      const inputRef = ref(null);
+      const fileName = ref("");
+      const fileData = shallowRef(null);
 
-        // 调用 WASM 生成缩略图
-        const img = new Image(imageData);
-        console.log(`创建 Image 对象时间: ${Date.now() - now}ms`);
-        now = Date.now();
-        const thumbnailData = img.thumbnail(100, 100);
-        console.log(`生成缩略图时间: ${Date.now() - now}ms`);
-        now = Date.now();
-        img.free();
-        console.log(`释放 Image 对象时间: ${Date.now() - now}ms`);
+      function onClickPick() {
+        inputRef.value?.click();
+      }
 
-        // 将缩略图数据转换为 Blob 并创建 Object URL
-        const blob = new Blob([thumbnailData], { type: "image/jpeg" });
+      async function onFileChange(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        fileName.value = file.name;
+        fileData.value = new Uint8Array(await file.arrayBuffer());
+      }
 
-        // 释放上一次的 Object URL
-        if (prevObjectUrl) {
-          URL.revokeObjectURL(prevObjectUrl);
+      return { inputRef, fileName, fileData, onClickPick, onFileChange };
+    }
+
+    // ==================== 缩略图组件 ====================
+
+    const ThumbnailCard = defineComponent({
+      name: "ThumbnailCard",
+      template: "#thumbnail-card",
+      setup() {
+        const {
+          inputRef,
+          fileName,
+          fileData,
+          onClickPick,
+          onFileChange: pickFile,
+        } = useFilePicker();
+        const { url: resultUrl, updateFromData } = useObjectUrl();
+        const error = ref("");
+
+        async function onFileChange(e) {
+          await pickFile(e);
+          error.value = "";
+          resultUrl.value = null;
+
+          try {
+            let now = Date.now();
+            const img = new Image(fileData.value);
+            console.log(`创建 Image 对象时间: ${Date.now() - now}ms`);
+
+            now = Date.now();
+            const thumbData = img.thumbnail(100, 100);
+            console.log(`生成缩略图时间: ${Date.now() - now}ms`);
+
+            const mime = img.mimeType;
+            img.free();
+            updateFromData(thumbData, mime);
+          } catch (err) {
+            error.value = "生成缩略图失败: " + err;
+          }
         }
 
-        prevObjectUrl = URL.createObjectURL(blob);
-        thumbnailImg.src = prevObjectUrl;
-        resultDiv.classList.add("visible");
-      } catch (err) {
-        errorEl.textContent = "生成缩略图失败: " + err;
-        errorEl.classList.add("visible");
-      }
+        return {
+          inputRef,
+          fileName,
+          resultUrl,
+          error,
+          onClickPick,
+          onFileChange,
+        };
+      },
     });
+
+    // ==================== 图片合并组件 ====================
+
+    const OverlayCard = defineComponent({
+      name: "OverlayCard",
+      template: "#overlay-card",
+      setup() {
+        const base = useFilePicker();
+        const top = useFilePicker();
+        const { url: resultUrl, updateFromData } = useObjectUrl();
+        const error = ref("");
+
+        /** 当两张图都已选择时执行合并 */
+        function tryOverlay() {
+          if (!base.fileData.value || !top.fileData.value) return;
+          error.value = "";
+          resultUrl.value = null;
+
+          try {
+            let now = Date.now();
+            const baseImg = new Image(base.fileData.value);
+            const topImg = new Image(top.fileData.value);
+            console.log(`创建两个 Image 对象时间: ${Date.now() - now}ms`);
+
+            now = Date.now();
+            const mergedData = baseImg.overlaying(topImg);
+            console.log(`图片合并时间: ${Date.now() - now}ms`);
+
+            const mime = baseImg.mimeType;
+            topImg.free();
+            baseImg.free();
+            updateFromData(mergedData, mime);
+          } catch (err) {
+            error.value = "图片合并失败: " + err;
+          }
+        }
+
+        async function onBaseChange(e) {
+          await base.onFileChange(e);
+          tryOverlay();
+        }
+
+        async function onTopChange(e) {
+          await top.onFileChange(e);
+          tryOverlay();
+        }
+
+        // 将 composable 返回的 ref 提升为顶层属性，确保模板自动解包
+        return {
+          baseInputRef: base.inputRef,
+          baseFileName: base.fileName,
+          onBaseClickPick: base.onClickPick,
+          topInputRef: top.inputRef,
+          topFileName: top.fileName,
+          onTopClickPick: top.onClickPick,
+          resultUrl,
+          error,
+          onBaseChange,
+          onTopChange,
+        };
+      },
+    });
+
+    // ==================== 挂载应用 ====================
+
+    createApp({
+      components: { ThumbnailCard, OverlayCard },
+    }).mount("#app");
   </script>
 </body>
 

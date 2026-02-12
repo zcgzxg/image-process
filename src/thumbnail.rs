@@ -5,6 +5,7 @@ use wasm_bindgen::prelude::*;
 
 const SUPPORTED_FORMATS: &[ImageFormat] = &[ImageFormat::Png, ImageFormat::Jpeg];
 
+/// 图片对象
 #[wasm_bindgen]
 pub struct Image {
     image: DynamicImage,
@@ -13,6 +14,7 @@ pub struct Image {
 
 #[wasm_bindgen]
 impl Image {
+    /// 创建图片对象
     #[wasm_bindgen(constructor)]
     pub fn new(image_data: Vec<u8>) -> Result<Self, JsValue> {
         let reader = Cursor::new(image_data);
@@ -36,6 +38,17 @@ impl Image {
         })
     }
 
+    /// 返回图片的 MIME 类型，如 "image/jpeg"、"image/png"
+    #[wasm_bindgen(getter = mimeType)]
+    pub fn mime_type(&self) -> String {
+        match self.format {
+            ImageFormat::Jpeg => String::from("image/jpeg"),
+            ImageFormat::Png => String::from("image/png"),
+            _ => String::from("application/octet-stream"),
+        }
+    }
+
+    /// 生成缩略图
     #[wasm_bindgen]
     pub fn thumbnail(&self, width: u32, height: u32) -> Result<Vec<u8>, JsValue> {
         let thumbnail = self.image.thumbnail(width, height);
