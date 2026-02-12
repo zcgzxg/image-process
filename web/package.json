@@ -1,0 +1,22 @@
+{
+  "name": "image-process-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5",
+    "typescript": "~5.7",
+    "vite": "^6",
+    "vite-plugin-wasm": "^3",
+    "vite-plugin-top-level-await": "^1",
+    "vue-tsc": "^2"
+  }
+}

@@ -4,13 +4,13 @@ cargo build \
 
 wasm-bindgen \
     target/wasm32-unknown-unknown/release/image_process.wasm \
-    --out-dir dist-web \
+    --out-dir web/src/image-process \
     --target bundler \
     --reference-types \
     --weak-refs
 
 static-compress \
     -c brotli \
-    ./dist-web/*.wasm
+    ./web/src/image-process/*.wasm
 
-ls -lah ./dist-web
+ls -lah ./web/src/image-process

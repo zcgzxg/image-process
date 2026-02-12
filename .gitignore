@@ -1,3 +1,5 @@
 /target
-/dist-web
+/web/src/image-process
+node_modules
 /dist-mp
+dist
