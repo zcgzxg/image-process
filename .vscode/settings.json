@@ -14,6 +14,7 @@
     "bindgen",
     "cdylib",
     "codegen",
+    "imageops",
     "rlib",
     "rustc"
   ]
