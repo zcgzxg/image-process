@@ -1,3 +1,5 @@
+export RUSTFLAGS="-C target-feature=-reference-types"
+
 cargo build \
     --target wasm32-unknown-unknown \
     --release
@@ -5,10 +7,7 @@ cargo build \
 wasm-bindgen \
     target/wasm32-unknown-unknown/release/image_process.wasm \
     --out-dir dist-mp \
-    --target bundler \
-    --encode-into never \
-    --reference-types \
-    --weak-refs
+    --target web
 
 static-compress \
     -c brotli \
