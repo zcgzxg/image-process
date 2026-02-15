@@ -1,0 +1,5 @@
+id: const_expected_response_types
+language: javascript
+rule:
+  pattern: const EXPECTED_RESPONSE_TYPES = $A
+fix: ""

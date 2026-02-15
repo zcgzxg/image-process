@@ -1,0 +1,12 @@
+id: add_import
+language: javascript
+rule:
+  all:
+    - pattern: let wasm
+    - inside:
+        kind: program
+        stopBy: end
+fix: |
+    import { TextDecoder } from '@/utils/encoding'
+
+    let wasm;

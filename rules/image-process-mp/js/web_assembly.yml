@@ -1,0 +1,5 @@
+id: web_assembly
+language: javascript
+rule:
+  pattern: WebAssembly.$A
+fix: WXWebAssembly.$A

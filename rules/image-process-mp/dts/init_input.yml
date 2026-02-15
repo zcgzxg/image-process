@@ -1,0 +1,5 @@
+id: init_input
+language: typescript
+rule:
+  pattern: export type InitInput = $A
+fix: ""

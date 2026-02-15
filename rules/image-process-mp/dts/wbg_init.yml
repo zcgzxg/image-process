@@ -1,0 +1,7 @@
+id: wbg_init
+language: typescript
+rule:
+  pattern: |
+    export default function __wbg_init($A): $B
+fix: |
+  export default function __wbg_init(path: { path: string } | string): $B

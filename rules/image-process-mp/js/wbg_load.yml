@@ -1,0 +1,5 @@
+id: wbg_load
+language: javascript
+rule:
+  pattern: async function __wbg_load($$$A) {$$$B}
+fix: ""

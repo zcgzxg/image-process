@@ -1,0 +1,24 @@
+id: wbg_init
+language: javascript
+rule:
+  pattern: |
+    async function __wbg_init($$$A) {$$$B}
+fix: |
+  async function __wbg_init(path) {
+    if (wasm !== undefined) return wasm
+
+    if (typeof path !== 'undefined') {
+      if (Object.getPrototypeOf(path) === Object.prototype) {
+        ;({ path } = path)
+      }
+    }
+
+    if (typeof path !== 'string') {
+      throw new Error('必须提供 .wasm 文件的路径字符串')
+    }
+
+    const imports = __wbg_get_imports()
+    const { instance, module } = await WXWebAssembly.instantiate(path, imports)
+
+    return __wbg_finalize_init(instance, module)
+  }

@@ -1,0 +1,6 @@
+id: sync_init_input
+language: typescript
+rule:
+  pattern: export type SyncInitInput = $A
+fix: |
+  export type SyncInitInput = WXWebAssembly.BufferSource | WXWebAssembly.Module
