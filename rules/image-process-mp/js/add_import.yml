@@ -7,6 +7,7 @@ rule:
         kind: program
         stopBy: end
 fix: |
+    /* eslint-disable */
     import { TextDecoder } from '@/utils/encoding'
 
     let wasm;

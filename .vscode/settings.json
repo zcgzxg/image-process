@@ -16,6 +16,7 @@
     "codegen",
     "imageops",
     "rlib",
-    "rustc"
+    "rustc",
+    "webp"
   ]
 }

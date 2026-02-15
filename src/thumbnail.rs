@@ -3,7 +3,7 @@ use std::io::Cursor;
 use image::{DynamicImage, ImageFormat, ImageReader, imageops};
 use wasm_bindgen::prelude::*;
 
-const SUPPORTED_FORMATS: &[ImageFormat] = &[ImageFormat::Png, ImageFormat::Jpeg];
+const SUPPORTED_FORMATS: &[ImageFormat] = &[ImageFormat::Png, ImageFormat::Jpeg, ImageFormat::WebP];
 
 /// 图片对象
 #[wasm_bindgen]
@@ -25,15 +25,20 @@ impl Image {
         let format = match image.format() {
             Some(format) => {
                 if !SUPPORTED_FORMATS.contains(&format) {
-                    return Err(JsValue::from_str("Unsupported format"));
+                    return Err(JsValue::from(format!(
+                        "Unsupported format: {}",
+                        format.to_mime_type()
+                    )));
                 }
                 format
             }
-            None => return Err(JsValue::from_str("Unsupported format")),
+            None => return Err(JsValue::from_str("Unsupported format None")),
         };
 
         Ok(Self {
-            image: image.decode().map_err(|e| e.to_string())?,
+            image: image
+                .decode()
+                .map_err(|e| format!("err: {}, format: {}", e, format.to_mime_type()))?,
             format,
         })
     }
@@ -41,11 +46,7 @@ impl Image {
     /// 返回图片的 MIME 类型，如 "image/jpeg"、"image/png"
     #[wasm_bindgen(getter = mimeType)]
     pub fn mime_type(&self) -> String {
-        match self.format {
-            ImageFormat::Jpeg => String::from("image/jpeg"),
-            ImageFormat::Png => String::from("image/png"),
-            _ => String::from("application/octet-stream"),
-        }
+        self.format.to_mime_type().to_string()
     }
 
     /// 生成缩略图
