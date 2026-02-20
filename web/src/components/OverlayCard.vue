@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { Image } from "../image-process/image_process.js";
+import { Image } from "../image-process";
 import { useFilePicker } from "../composables/useFilePicker";
 import { useObjectUrl } from "../composables/useObjectUrl";
 
