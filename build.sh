@@ -1,6 +1,4 @@
-cargo build \
-    --target wasm32-unknown-unknown \
-    --release
+cargo build --release
 
 wasm-bindgen \
     target/wasm32-unknown-unknown/release/image_process.wasm \

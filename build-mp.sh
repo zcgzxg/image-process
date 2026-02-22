@@ -1,16 +1,15 @@
 rm -rf ./dist-mp/*
 
-export RUSTFLAGS="-C target-feature=-reference-types"
-
-cargo build \
-    --target wasm32-unknown-unknown \
-    --release
+export RUSTFLAGS="-C target-feature=+simd128,-reference-types"
+cargo build --release
 
 wasm-bindgen \
     target/wasm32-unknown-unknown/release/image_process.wasm \
     --out-dir dist-mp \
     --out-name lib \
-    --target web
+    --target web \
+    --reference-types \
+    --weak-refs
 
 # 使用 ast-grep 自动修改生成的代码以兼容小程序
 echo "正在修改生成的代码以兼容小程序..."
