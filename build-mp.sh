@@ -1,7 +1,7 @@
 rm -rf ./dist-mp/*
 
-export RUSTFLAGS="-C target-feature=+simd128,-reference-types"
-cargo build --release
+# export RUSTFLAGS="-C target-feature=+simd128,-reference-types"
+cargo +nightly build --release
 
 wasm-bindgen \
     target/wasm32-unknown-unknown/release/image_process.wasm \
