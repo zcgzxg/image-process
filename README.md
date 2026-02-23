@@ -23,28 +23,34 @@
 
 ### 前置要求
 
-- Rust 工具链（包含 wasm32-unknown-unknown target）
-- wasm-bindgen-cli
-- static-compress（用于压缩 wasm 文件）
-- ast-grep（小程序构建时需要）
+- Rust Nightly（建议使用 `rustup` 安装，并添加 `wasm32-unknown-unknown` target）
+- `wasm-bindgen-cli`
+- `wasm-opt`（用于压缩 WASM 体积，来自 `binaryen`）
+- `static-compress`（用于压缩 wasm 文件）
+- Node.js（用于运行 `web/` 下的 Vue 示例）
+- `ast-grep`（小程序构建时需要）
 
-安装依赖：
+安装依赖示例：
 
 ```bash
-# 安装 Rust
+# 安装 Rust（如未安装）
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-# 添加 wasm32 target
-rustup target add wasm32-unknown-unknown
+# 安装 Nightly 工具链并添加 wasm32 target
+rustup toolchain install nightly
+rustup target add wasm32-unknown-unknown --toolchain nightly
 
-# 安装 wasm-bindgen-cli
-cargo install wasm-bindgen-cli
-
-# 安装 static-compress
-cargo install static-compress
+# 安装 wasm-bindgen-cli 与 static-compress
+cargo install wasm-bindgen-cli static-compress
 
 # 安装 ast-grep（小程序构建需要）
 cargo install ast-grep
+
+# 安装 wasm-opt（来自 binaryen，可按操作系统选择其一）
+# 例如：
+#   npm install -g binaryen
+#   或 brew install binaryen
+#   或 apt install binaryen
 ```
 
 ### 构建方式
@@ -56,6 +62,13 @@ cargo install ast-grep
 ```bash
 ./build.sh
 ```
+
+该脚本会完成：
+
+- 使用 `cargo +nightly build --release` 进行 Release 构建
+- 使用 `wasm-bindgen` 生成 JS/WASM 绑定文件到 `web/src/image-process`
+- 使用 `wasm-opt` 对 `.wasm` 文件进行深度体积优化
+- 对 `.wasm` 文件做 Brotli 压缩
 
 构建产物位于 `./web/src/image-process` 目录，包含：
 
