@@ -1,6 +1,6 @@
 rm -rf ./dist-mp/*
 
-# export RUSTFLAGS="-C target-feature=+simd128,-reference-types"
+export RUSTFLAGS="-C target-feature=+simd128,-reference-types"
 cargo +nightly build --release
 
 wasm-opt -O3 \
@@ -17,7 +17,6 @@ wasm-bindgen \
     --out-dir dist-mp \
     --out-name lib \
     --target web \
-    --reference-types \
     --weak-refs
 
 # 使用 ast-grep 自动修改生成的代码以兼容小程序
@@ -35,3 +34,5 @@ static-compress \
     ./dist-mp/*.wasm
 
 ls -lah ./dist-mp
+rm -rf ./miniprogram/src/image-process
+cp -r ./dist-mp ./miniprogram/src/image-process

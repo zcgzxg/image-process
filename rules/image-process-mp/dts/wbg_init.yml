@@ -1,4 +1,4 @@
-id: wbg_init
+id: wbg_init_ts
 language: typescript
 rule:
   pattern: |
